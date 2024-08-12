@@ -55,6 +55,10 @@ abstract contract OmniServiceCore is
 
     event AddRemoteCaller(address indexed target, uint256 remoteChainId, bytes remoteAddress, bool tag);
 
+    event GasInfo(bytes32 indexed orderId,uint256 indexed executingGas,uint256 indexed executedGas);
+
+    error ExecuteReturn(bytes errorInfo);
+
     function initialize(address _owner) public virtual initializer checkAddress(_owner) {
         // _changeAdmin(_owner);
         __Pausable_init();
@@ -224,6 +228,7 @@ abstract contract OmniServiceCore is
         if (!AddressUpgradeable.isContract(target)) {
             return (false, bytes("NotContract"));
         }
+        uint256 executingGas = gasleft();
         if (_msgData.msgType == MessageType.CALLDATA) {
             if (!callerList[target][_outEvent.fromChain][_outEvent.fromAddress]) {
                 return (false, bytes("InvalidCaller"));
@@ -256,6 +261,7 @@ abstract contract OmniServiceCore is
         } else {
             return (false, bytes("InvalidMessageType"));
         }
+        emit GasInfo(_outEvent.orderId,executingGas,gasleft());
     }
 
     function _messageIn(
@@ -277,7 +283,7 @@ abstract contract OmniServiceCore is
             );
         } else {
             if (_revert) {
-                revert(string(returnData));
+                revert ExecuteReturn(returnData);
             } else {
                 _storeMessageData(_outEvent, returnData);
             }

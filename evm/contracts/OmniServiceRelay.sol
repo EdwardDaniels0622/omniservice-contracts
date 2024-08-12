@@ -127,7 +127,7 @@ contract OmniServiceRelay is OmniServiceCore {
         (bool success, bytes memory returnData) = _messageExecute(_outEvent, _msgData, true);
         if (!success) {
             if (_retry) {
-                revert(string(returnData));
+                revert ExecuteReturn(returnData);
             } else {
                 _storeMessageData(_outEvent, returnData);
             }
